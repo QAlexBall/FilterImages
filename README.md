@@ -19,3 +19,17 @@ Options:
 # remove annotated folder
 python remove_folder.py --parent_folder path/to/folder --folder_name annotated
 ```
+
+### TODO
+
+open remote folder
+traverse image_name
+for image_name in list(traverse(image_folder)):
+  scp example@remote_host:path/to/image_name ./image_name
+=> if need_delete => add image_name to need_delete_list
+=> check need_delete_images
+=> delete remote images which in need_delete_list
+
+
+
+
