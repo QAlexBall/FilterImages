@@ -21,7 +21,7 @@ python remove_folder.py --parent_folder path/to/folder --folder_name annotated
 ```
 
 ### TODO
-
+```python
 open remote folder
 traverse image_name
 for image_name in list(traverse(image_folder)):
@@ -29,6 +29,7 @@ for image_name in list(traverse(image_folder)):
 => if need_delete => add image_name to need_delete_list
 => check need_delete_images
 => delete remote images which in need_delete_list
+```
 
 
 
