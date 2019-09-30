@@ -29,6 +29,7 @@ for image_name in list(traverse(image_folder)):
 => if need_delete => add image_name to need_delete_list
 => check need_delete_images
 => delete remote images which in need_delete_list
+=> category images with image_name
 ```
 
 

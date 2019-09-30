@@ -27,4 +27,5 @@ def remove_match_folder(user, parent_folder, folder_name):
             log.info("delete folder => {}".format(need_remove))
             shutil.rmtree(need_remove)
 
+
 remove_match_folder()
