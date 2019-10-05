@@ -24,18 +24,22 @@ class ShowImage(QWidget):
     def __init__(self):
         super().__init__()
         self.images_folder = None
-        self.tmp_image = os.path.dirname(os.path.dirname(__file__)) + '/app_images/tmp.png'
+        self.tmp_image = os.path.dirname(os.path.dirname(__file__)) + '/app_images/tmp.jpg'
         self.collection = use_collection("nb201-leopaper301_s3")
-        self.reload_tmp_image()
 
         self.pixmap = QPixmap(self.tmp_image).scaled(800, 600, Qt.KeepAspectRatio)
         self.pixmap_label = QLabel(self)
+        self.image_info_label = QLabel(self)
+        self.image_path_label = QLabel(self)
         self.previous_button = QPushButton("Previous", self)
         self.next_button = QPushButton("Next", self)
+        self.delete_button = QPushButton("Delete", self)
         self.previous_shortcut = QShortcut("d", self)
         self.next_shortcut = QShortcut("f", self)
         self.main_layout = QHBoxLayout()
         self.button_layout = QVBoxLayout()
+
+        self.reload_tmp_image()
         # _getCurrentImagePath()
         self.initUI()
 
@@ -46,7 +50,11 @@ class ShowImage(QWidget):
         cmd = "scp -P 9201 nb201@119.23.33.220:{} {}".format(remote_image_path, self.tmp_image)
         print(cmd)
         subprocess.getoutput(cmd)
-        # self.pixmap = QPixmap(self.tmp_image).scaled(800, 600, Qt.KeepAspectRatio)
+        self.pixmap = QPixmap(self.tmp_image).scaled(800, 600, Qt.KeepAspectRatio)
+        self.pixmap_label.setPixmap(self.pixmap)
+        self.image_info_label.setText("current_image_id: {}".format(current_image_id))
+        self.image_path_label.setText("path: {}".format(remote_image_path))
+        self.main_layout.update()
 
     def initUI(self):
         self.setUpLayout()
@@ -56,8 +64,15 @@ class ShowImage(QWidget):
     def setUpLayout(self):
         # TODO => why can't show remote images with pixmap?
         self.pixmap_label.setPixmap(self.pixmap)
+        current_image_id = self.collection.find_one({"class": "app"})["current_image_id"]
+        self.image_info_label.setText("current_image_id: {}".format(current_image_id))
+        self.image_path_label.setText("please enter next.")
+
+        self.button_layout.addWidget(self.image_info_label)
+        self.button_layout.addWidget(self.image_path_label)
         self.button_layout.addWidget(self.previous_button)
         self.button_layout.addWidget(self.next_button)
+        self.button_layout.addWidget(self.delete_button)
         self.main_layout.addWidget(self.pixmap_label)
         self.main_layout.addLayout(self.button_layout)
         self.setLayout(self.main_layout)
