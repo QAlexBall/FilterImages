@@ -55,6 +55,11 @@ def next_image(collection):
     _update_current_image_id(collection, 'next')
 
 
+def set_image(collection, image_id):
+    condition = {'class': "app"}
+    collection.update_one(condition, {'$set': {'current_image_id': image_id}})
+
+
 def get_all_image(ssh, collection, folder_name="/mnt/hdd/dataset/leopaper301_s3"):
     # TODO => add parent folder for records
     if folder_name[-1] == '/':
@@ -95,12 +100,17 @@ def main():
     collection_name = "nb201-leopaper301_s3"
     collection = create_collection(my_db, collection_name)
     # get_all_image(ssh, collection, folder_name)
-    # show_records(collection, {"class": "image"})
+    set_image(collection, 100)
+    show_records(collection, {"class": "image"})
     # my_db.drop_collection(collection)
-    next_image(collection)
+    # next_image(collection)
     ssh.close()
+
+
+def test_connection(client):
+    stdin, stdout, stderr = client.exec_command("ls")
+    print(stdout)
 
 
 if __name__ == '__main__':
     main()
-
