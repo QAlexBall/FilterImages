@@ -27,7 +27,7 @@ class ShowImage(QWidget):
         self.images_folder = None
         self.tmp_image = os.path.dirname(os.path.dirname(__file__)) + '/app_images/tmp.jpg'
         self.collection = use_collection("nb201-leopaper301_s3")
-        self.ssh_client = create_ssh_client("119.23.33.220", "nb201", "9201")
+        self.ssh_client = create_ssh_client("192.168.13.201", "nb201", "22")
         self.ftp_client = self.ssh_client.open_sftp()
 
         # widget
@@ -35,8 +35,8 @@ class ShowImage(QWidget):
         self.pixmap_label = QLabel(self)
         self.image_info_label = QLabel(self)
         self.image_path_label = QLabel(self)
-        self.previous_button = QPushButton("Previous", self)
-        self.next_button = QPushButton("Next", self)
+        self.previous_button = QPushButton("Previous(D)", self)
+        self.next_button = QPushButton("Next(F)", self)
         self.delete_button = QPushButton("Delete", self)
         self.set_image_id_button = QPushButton("SetImageID", self)
         self.previous_shortcut = QShortcut("d", self)
@@ -52,6 +52,7 @@ class ShowImage(QWidget):
         self.initUI()
 
     def reload_tmp_image(self):
+        print("start reload")
         current_image_id = self.collection.find_one({"class": "app"})["current_image_id"]
         remote_image_record = self.collection.find_one({"id": current_image_id})
         remote_image_path = remote_image_record['path']
@@ -60,7 +61,7 @@ class ShowImage(QWidget):
         self.pixmap_label.setPixmap(self.pixmap)
         self.image_info_label.setText("current_image_id: {}".format(current_image_id))
         self.image_path_label.setText("path: {}".format(remote_image_path))
-        self.main_layout.update()
+        print("end reload")
 
     def initUI(self):
         self.setUpLayout()

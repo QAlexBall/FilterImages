@@ -3,7 +3,7 @@ filter no-needed images
 
 ### Usage
 
-```shell
+```shell script
 $ python remove_folder.py --help
 Usage: remove_folder.py [OPTIONS]
 
@@ -20,8 +20,16 @@ Options:
 python remove_folder.py --parent_folder path/to/folder --folder_name annotated
 ```
 
+### FilterImage Usage
+```shell script
+$ mongod --dbpath=./db/data
+$ =>  # initial collection => `use _update_current_image_id(collection, op_type='')` from fetch_image_info.py
+$ =>  # `get_all_image(ssh, collection, folder_name)`
+$ =>  # and can show records with `show_records(collection, {"class": "image"})`
+```
+
 ### TODO
-```python
+```
 open remote folder
 traverse image_name
 for image_name in list(traverse(image_folder)):

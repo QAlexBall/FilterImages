@@ -5,7 +5,7 @@ import logging
 import subprocess
 from utils.data_utils import my_db, create_collection
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.WARNING)
 
 
 def create_ssh_client(hostname="192.168.13.201", username="nb201", port=22):
@@ -92,18 +92,18 @@ def show_records(collection, filter_dict):
 
 
 def main():
-    hostname = os.environ.get('HOSTNAME', None)
-    username = os.environ.get('USERNAME', None)
-    port = os.environ.get('PORT', None)
+    hostname = os.environ.get('HOSTNAME', '192.168.13.201')
+    username = os.environ.get('USERNAME', 'nb201')
+    port = os.environ.get('PORT', '22')
     ssh = create_ssh_client(hostname, username, port)
     folder_name = "/mnt/hdd/dataset/leopaper301_s3"
     collection_name = "nb201-leopaper301_s3"
     collection = create_collection(my_db, collection_name)
     # get_all_image(ssh, collection, folder_name)
     set_image(collection, 100)
-    show_records(collection, {"class": "image"})
+    # show_records(collection, {"class": "image"})
     # my_db.drop_collection(collection)
-    # next_image(collection)
+    next_image(collection)
     ssh.close()
 
 
