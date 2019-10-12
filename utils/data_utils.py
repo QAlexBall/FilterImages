@@ -17,7 +17,7 @@ def create_collection(db, collection_name):
 
 my_client = create_client()
 my_db = my_client['mydb']
-my_collection = create_collection(my_db, 'my_collection')
+# my_collection = create_collection(my_db, 'my_collection')
 
 
 def use_collection(collection_name):
@@ -33,8 +33,9 @@ if __name__ == '__main__':
     # print(my_db.list_collection_names())
     # dic = {"test", "test_collection"}
     # test_collection.insert_one(dic)
-    collection = use_collection("/mnt/hdd/dataset/Images/CuttingBed6/local/Images/cutting1/0")
-    for record in collection.find():
+    my_db.drop_collection('/home')
+    collection_show = use_collection("/mnt/hdd/dataset/Images/CuttingBed6/local/Images/cutting1/0")
+    for record in collection_show.find():
         print(record)
     print(my_db.list_collection_names())
     print(my_client.list_database_names())
