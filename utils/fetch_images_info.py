@@ -29,7 +29,7 @@ def is_image(file_name):
     return result
 
 
-def _update_current_image_id(collection, op_type='next'):
+def update_current_image_id(collection, op_type='next'):
     # TODO => add parent folder for update
     value = 1
     condition = {"class": "app"}
@@ -38,7 +38,7 @@ def _update_current_image_id(collection, op_type='next'):
     if class_app is None:
         print("init class_app")
         collection.insert_one({"class": "app", "current_image_id": 1})
-    elif (class_app['current_image_id'] == 0 and op_type != 'next') or \
+    elif (class_app['current_image_id'] == 1 and op_type != 'next') or \
             (class_app['current_image_id'] == images_count and op_type == 'next'):
         value = 0
     else:
@@ -47,11 +47,11 @@ def _update_current_image_id(collection, op_type='next'):
 
 
 def previous_image(collection):
-    _update_current_image_id(collection, "previous")
+    update_current_image_id(collection, "previous")
 
 
 def next_image(collection):
-    _update_current_image_id(collection, 'next')
+    update_current_image_id(collection, 'next')
 
 
 def set_image(collection, image_id):
