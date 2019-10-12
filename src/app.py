@@ -7,7 +7,7 @@ from PyQt5.QtWidgets import (
     QAction,
     QShortcut,
 )
-from src.show_image import setUpShowImage
+from src.show_image import ShowImage
 
 
 class FilterImagesMainWindow(QMainWindow):
@@ -16,7 +16,7 @@ class FilterImagesMainWindow(QMainWindow):
         self.path = os.path.dirname(os.path.dirname(__file__))
         self.image_path = self.path + '/app_images/'
 
-        self.show_image = setUpShowImage()
+        self.show_image = ShowImage()
         self.visitable_image_sc = QShortcut("v", self)
         self.unvisitable_image_sc = QShortcut("h", self)
         self.initUI()
