@@ -30,16 +30,6 @@ $ =>  # and can show records with `show_records(collection, {"class": "image"})`
 
 ### TODO
 ```
-open remote folder
-traverse image_name
-for image_name in list(traverse(image_folder)):
-  scp example@remote_host:path/to/image_name ./image_name
-=> if need_delete => add image_name to need_delete_list
-=> check need_delete_images
-=> delete remote images which in need_delete_list
-=> category images with image_name
+load path from remote host
+category remote images
 ```
-
-
-
-

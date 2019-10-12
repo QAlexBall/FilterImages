@@ -1,4 +1,5 @@
 import pymongo
+from functools import partial
 
 
 def create_client(host='localhost', port=27017):
@@ -28,10 +29,12 @@ if __name__ == '__main__':
     my_db = my_client['mydb']
 
     # my_db.drop_collection('my_collection')
-    test_collection = create_collection(my_db, 'test_collection')
-    print(my_db.list_collection_names())
+    # test_collection = create_collection(my_db, 'test_collection')
+    # print(my_db.list_collection_names())
     # dic = {"test", "test_collection"}
     # test_collection.insert_one(dic)
-    for record in my_collection.find():
+    collection = use_collection("/mnt/hdd/dataset/Images/CuttingBed6/local/Images/cutting1/0")
+    for record in collection.find():
         print(record)
+    print(my_db.list_collection_names())
     print(my_client.list_database_names())

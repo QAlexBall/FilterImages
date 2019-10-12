@@ -44,7 +44,6 @@ def _update_current_image_id(collection, op_type='next'):
     else:
         value = 1 if op_type == 'next' else -1
     collection.update_one(condition, {'$inc': {'current_image_id': value}})
-    print(class_app)
 
 
 def previous_image(collection):
