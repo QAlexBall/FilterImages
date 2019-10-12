@@ -1,14 +1,16 @@
 import os
 import json
 from PyQt5.QtCore import pyqtSlot, Qt
-from PyQt5.QtGui import QPixmap
+from PyQt5.QtGui import QPixmap, QStandardItemModel, QStandardItem
 from PyQt5.QtWidgets import (
     QWidget,
     QHBoxLayout,
     QLabel,
     QPushButton,
     QShortcut,
-    QVBoxLayout, QInputDialog)
+    QVBoxLayout,
+    QInputDialog,
+    QListView)
 from utils.data_utils import use_collection, my_db
 from utils.fetch_images_info import previous_image, next_image, create_ssh_client
 from utils.fetch_images_info import set_image, get_all_image, update_current_image_id
@@ -31,12 +33,16 @@ class ShowImage(QWidget):
         self.pixmap_label = QLabel(self)
         self.image_info_label = QLabel(self)
         self.image_path_label = QLabel(self)
+
+        self.collections_list_view = QListView(self)
+
         self.previous_button = QPushButton("Previous(D)", self)
         self.next_button = QPushButton("Next(F)", self)
         self.delete_button = QPushButton("Delete", self)
         self.set_image_id_button = QPushButton("SetImageID", self)
         self.load_path_button = QPushButton("LoadPath", self)
         self.reload_path_button = QPushButton("ReloadPath", self)
+
         self.previous_shortcut = QShortcut("d", self)
         self.next_shortcut = QShortcut("f", self)
 
@@ -82,11 +88,17 @@ class ShowImage(QWidget):
     def setUpLayout(self):
         # TODO => why can't show remote images with pixmap?
         self.pixmap_label.setPixmap(self.pixmap)
-        current_image_id = self.collection.find_one({"class": "app"})["current_image_id"] if self.path != "default" \
-            else "-1 \n please load remote path"
-        self.image_info_label.setText("current_image_id: {}".format(current_image_id))
+        current_image_id = self.collection.find_one({"class": "app"})["current_image_id"] \
+            if self.path != "default" else "-1 \n please load remote path"
 
+        self.image_info_label.setText("current_image_id: {}".format(current_image_id))
         self.image_path_label.setText("please enter next.")
+
+        collections = self.db.list_collection_names()
+        model = QStandardItemModel()
+        for collection in sorted(collections):
+            model.appendRow(QStandardItem(collection))
+        self.collections_list_view.setModel(model)
 
         # add widget
         self.button_layout.addWidget(self.image_info_label)
@@ -96,6 +108,7 @@ class ShowImage(QWidget):
         self.button_layout.addWidget(self.previous_button)
         self.button_layout.addWidget(self.next_button)
         self.button_layout.addWidget(self.delete_button)
+        self.button_layout.addWidget(self.collections_list_view)
         self.image_info_layout.addWidget(self.image_path_label)
         self.image_info_layout.addWidget(self.pixmap_label)
 
@@ -134,6 +147,16 @@ class ShowImage(QWidget):
         else:
             self.path = path
             self.collection = self.db[path]
+
+        # update config.json
+        config_file = open('../config.json', 'r')
+        config = json.load(config_file)
+        config_file.close()
+
+        config_file = open('../config.json', 'w')
+        config['current_collection'] = path
+        json.dump(config, config_file, indent=4)
+        config_file.close()
         print("load finished.")
 
     @pyqtSlot()
