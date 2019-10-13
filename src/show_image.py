@@ -11,9 +11,12 @@ from PyQt5.QtWidgets import (
     QVBoxLayout,
     QInputDialog,
     QListView)
-from utils.data_utils import use_collection, my_db
+from utils.data_utils import use_collection, my_db, read_collection_from_config, update_collection_config
 from utils.fetch_images_info import previous_image, next_image, create_ssh_client
 from utils.fetch_images_info import set_image, get_all_image, update_current_image_id
+import logging
+
+logging.basicConfig(level=logging.INFO)
 
 
 class ShowImage(QWidget):
@@ -21,11 +24,12 @@ class ShowImage(QWidget):
     def __init__(self):
         super().__init__()
         self.images_folder = None
-        self.tmp_image = os.path.dirname(os.path.dirname(__file__)) + '/app_images/tmp.jpg'
+        self.tmp_image = os.path.dirname(os.path.dirname(__file__)) + '/app_images/tmp.png'
         self.db = my_db
         self.path = "default"
-        self.collection = use_collection(self.path)
-        self.ssh_client = create_ssh_client("192.168.13.201", "nb201", "22")
+        self.collection = use_collection(self.path) if self.path != "" else use_collection("default")
+        # self.ssh_client = create_ssh_client("192.168.13.201", "nb201", "22")
+        self.ssh_client = create_ssh_client("119.23.33.220", "chris", "22")
         self.ftp_client = self.ssh_client.open_sftp()
 
         # widget
@@ -58,27 +62,25 @@ class ShowImage(QWidget):
     def reload_tmp_image(self):
         # load current collection from config.json
         if self.path == "default":
-            config_file = open('../config.json', 'r')
-            config = json.load(config_file)
+            config = read_collection_from_config()
             self.path = config.get('current_collection', 'default')
-            self.collection = use_collection(self.path)
-            config_file.close()
-
-        # reload layout for images.
-        print("start reload")
-        current_image_id = self.collection.find_one({"class": "app"})["current_image_id"]
-        remote_image_record = self.collection.find_one({"id": current_image_id})
-        if remote_image_record:
-            remote_image_path = remote_image_record['path']
-            self.ftp_client.get(remote_image_path, self.tmp_image)  # get image from remote
-            self.pixmap = QPixmap(self.tmp_image).scaled(800, 600, Qt.KeepAspectRatio)
-            self.pixmap_label.setPixmap(self.pixmap)
-            self.image_info_label.setText("current_image_id: {}".format(current_image_id))
-            self.image_path_label.setText("path: {}".format(remote_image_path))
-            print("end reload")
+            self.collection = use_collection(self.path) if self.path != "" else use_collection("default")
         else:
-            self.image_path_label.setText("no such image path.")
-            self.image_info_label.setText("current_image_id: {} not exist.".format(current_image_id))
+            # reload layout for images.
+            print("start reload")
+            current_image_id = self.collection.find_one({"class": "app"})["current_image_id"]
+            remote_image_record = self.collection.find_one({"id": current_image_id})
+            if remote_image_record:
+                remote_image_path = remote_image_record['path']
+                self.ftp_client.get(remote_image_path, self.tmp_image)  # get image from remote
+                self.pixmap = QPixmap(self.tmp_image).scaled(800, 600, Qt.KeepAspectRatio)
+                self.pixmap_label.setPixmap(self.pixmap)
+                self.image_info_label.setText("current_image_id: {}".format(current_image_id))
+                self.image_path_label.setText("path: {}".format(remote_image_path))
+                print("end reload")
+            else:
+                self.image_path_label.setText("no such image path.")
+                self.image_info_label.setText("current_image_id: {} not exist.".format(current_image_id))
 
     def initUI(self):
         self.setUpLayout()
@@ -88,8 +90,11 @@ class ShowImage(QWidget):
     def setUpLayout(self):
         # TODO => why can't show remote images with pixmap?
         self.pixmap_label.setPixmap(self.pixmap)
-        current_image_id = self.collection.find_one({"class": "app"})["current_image_id"] \
-            if self.path != "default" else "-1 \n please load remote path"
+        print(self.path, self.collection)
+        current_image_app = self.collection.find_one({"class": "app"})
+        current_image_id = current_image_app['current_image_id'] \
+            if self.path != "default" and current_image_app is not None \
+            else "-1 \n please load remote path"
 
         self.image_info_label.setText("current_image_id: {}".format(current_image_id))
         self.image_path_label.setText("please enter next.")
@@ -132,32 +137,21 @@ class ShowImage(QWidget):
     @pyqtSlot()
     def load_remote_path(self):
         path, ok = QInputDialog.getText(self, "Input Remote Path", "Enter Path: ")
+        self.collection = self.db[path] if path != "" else use_collection("default")
+        data_info = self.collection.find_one({'class': 'app'})
+
         stdin, stdout, stderr = self.ssh_client.exec_command("ls {}".format(path))
         path_exist = True if stdout.read().decode() != "" else False
-        self.collection = self.db[path]
-        data_info = self.collection.find_one({'class': 'app'})
-        print(data_info)
         if not path_exist:
             my_db.drop_collection(path)
             self.load_remote_path()
-        if ok and data_info is None:
+        elif ok and data_info is None:
             self.path = path
             get_all_image(self.ssh_client, self.collection, folder_name=path)
             update_current_image_id(self.collection, 'init')
-        else:
-            self.path = path
-            self.collection = self.db[path]
-
-        # update config.json
-        config_file = open('../config.json', 'r')
-        config = json.load(config_file)
-        config_file.close()
-
-        config_file = open('../config.json', 'w')
-        config['current_collection'] = path
-        json.dump(config, config_file, indent=4)
-        config_file.close()
-        print("load finished.")
+            # update config.json
+            update_collection_config(self.path)
+            print("load finished.")
 
     @pyqtSlot()
     def reload_remote_path(self):

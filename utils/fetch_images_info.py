@@ -24,7 +24,7 @@ def fetch_folder(ssh, parent_folder="/mnt/hdd/dataset/leopaper301_s3/"):
 
 def is_image(file_name):
     result = False
-    if file_name.split('.')[-1] == 'jpg':
+    if file_name.split('.')[-1] == 'jpg' or file_name.split('.')[1] == 'png':
         result = True
     return result
 
