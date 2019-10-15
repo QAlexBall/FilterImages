@@ -1,5 +1,5 @@
 import json
-
+import os
 import pymongo
 
 
@@ -27,19 +27,22 @@ def use_collection(collection_name):
     return my_db[collection_name]
 
 
+config_path = os.path.dirname(os.path.dirname(__file__)) + '/config.json'
+
+
 def read_collection_from_config():
-    config_file = open('./config.json', 'r')
+    config_file = open(config_path, 'r')
     config = json.load(config_file)
     config_file.close()
     return config
 
 
 def update_collection_config(path):
-    config_file = open('./config.json', 'r')
+    config_file = open(config_path, 'r')
     config = json.load(config_file)
     config_file.close()
 
-    config_file = open('./config.json', 'w')
+    config_file = open(config_path, 'w')
     config['current_collection'] = path
     json.dump(config, config_file, indent=4)
     config_file.close()

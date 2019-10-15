@@ -31,5 +31,7 @@ $ =>  # and can show records with `show_records(collection, {"class": "image"})`
 ### TODO
 ```
 load path from remote host
-category remote images
+add cache for 10 images?
+category remote images.
+load annotated from xml.
 ```
