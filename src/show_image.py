@@ -1,5 +1,6 @@
 import os
 import json
+from paramiko import SFTPError
 from PyQt5.QtCore import pyqtSlot, Qt
 from PyQt5.QtGui import QPixmap, QStandardItemModel, QStandardItem
 from PyQt5.QtWidgets import (
@@ -10,7 +11,8 @@ from PyQt5.QtWidgets import (
     QShortcut,
     QVBoxLayout,
     QInputDialog,
-    QListView)
+    QListView,
+    QMessageBox)
 from utils.data_utils import use_collection, my_db, read_collection_from_config, update_collection_config
 from utils.fetch_images_info import previous_image, next_image, create_ssh_client
 from utils.fetch_images_info import set_image, get_all_image, update_current_image_id
@@ -72,12 +74,15 @@ class ShowImage(QWidget):
             remote_image_record = self.collection.find_one({"id": current_image_id})
             if remote_image_record:
                 remote_image_path = remote_image_record['path']
-                self.ftp_client.get(remote_image_path, self.tmp_image)  # get image from remote
-                self.pixmap = QPixmap(self.tmp_image).scaled(800, 600, Qt.KeepAspectRatio)
-                self.pixmap_label.setPixmap(self.pixmap)
-                self.image_info_label.setText("current_image_id: {}".format(current_image_id))
-                self.image_path_label.setText("path: {}".format(remote_image_path))
-                print("end reload")
+                try:
+                    self.ftp_client.get(remote_image_path, self.tmp_image) # get image from remote
+                    self.pixmap = QPixmap(self.tmp_image).scaled(800, 600, Qt.KeepAspectRatio)
+                    self.pixmap_label.setPixmap(self.pixmap)
+                    self.image_info_label.setText("current_image_id: {}".format(current_image_id))
+                    self.image_path_label.setText("path: {}".format(remote_image_path))
+                    print("end reload")
+                except FileNotFoundError as e:
+                    raise e
             else:
                 self.image_path_label.setText("no such image path.")
                 self.image_info_label.setText("current_image_id: {} not exist.".format(current_image_id))
@@ -160,14 +165,22 @@ class ShowImage(QWidget):
 
     @pyqtSlot()
     def on_previous_button_click(self):
-        previous_image(self.collection)
-        self.reload_tmp_image()
+        message = previous_image(self.collection)
+
+        if message is None:
+            self.reload_tmp_image()
+        else:
+            QMessageBox.about(self, "previous_button", message)
         print("on previous button clicked")
 
     @pyqtSlot()
     def on_next_button_click(self):
-        next_image(self.collection)
-        self.reload_tmp_image()
+        message = next_image(self.collection)
+        print(message)
+        if message is None:
+            self.reload_tmp_image()
+        else:
+            QMessageBox.about(self, "next_button", message)
         print("on next button clicked")
 
     @pyqtSlot()
