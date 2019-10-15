@@ -31,6 +31,7 @@ def is_image(file_name):
 
 def update_current_image_id(collection, op_type='next'):
     # TODO => add parent folder for update
+    message = None
     value = 1
     condition = {"class": "app"}
     class_app = collection.find_one({"class": "app"})
@@ -41,17 +42,19 @@ def update_current_image_id(collection, op_type='next'):
     elif (class_app['current_image_id'] == 1 and op_type != 'next') or \
             (class_app['current_image_id'] == images_count and op_type == 'next'):
         value = 0
+        message = "no more images"
     else:
         value = 1 if op_type == 'next' else -1
     collection.update_one(condition, {'$inc': {'current_image_id': value}})
+    return message
 
 
 def previous_image(collection):
-    update_current_image_id(collection, "previous")
+    return update_current_image_id(collection, "previous")
 
 
 def next_image(collection):
-    update_current_image_id(collection, 'next')
+    return update_current_image_id(collection, 'next')
 
 
 def set_image(collection, image_id):
