@@ -30,7 +30,7 @@ def use_collection(collection_name):
 config_path = os.path.dirname(os.path.dirname(__file__)) + '/config.json'
 
 
-def read_collection_from_config():
+def read_config():
     config_file = open(config_path, 'r')
     config = json.load(config_file)
     config_file.close()

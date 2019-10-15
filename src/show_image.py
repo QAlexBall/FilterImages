@@ -13,7 +13,7 @@ from PyQt5.QtWidgets import (
     QInputDialog,
     QListView,
     QMessageBox)
-from utils.data_utils import use_collection, my_db, read_collection_from_config, update_collection_config
+from utils.data_utils import use_collection, my_db, read_config, update_collection_config
 from utils.fetch_images_info import previous_image, next_image, create_ssh_client
 from utils.fetch_images_info import set_image, get_all_image, update_current_image_id
 import logging
@@ -64,7 +64,7 @@ class ShowImage(QWidget):
     def reload_tmp_image(self):
         # load current collection from config.json
         if self.path == "default":
-            config = read_collection_from_config()
+            config = read_config()
             self.path = config.get('current_collection', 'default')
             self.collection = use_collection(self.path) if self.path != "" else use_collection("default")
         else:
@@ -166,7 +166,6 @@ class ShowImage(QWidget):
     @pyqtSlot()
     def on_previous_button_click(self):
         message = previous_image(self.collection)
-
         if message is None:
             self.reload_tmp_image()
         else:
