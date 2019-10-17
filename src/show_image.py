@@ -1,8 +1,8 @@
+import logging
 import os
-import json
-from paramiko import SFTPError
+
 from PyQt5.QtCore import pyqtSlot, Qt
-from PyQt5.QtGui import QPixmap, QStandardItemModel, QStandardItem
+from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import (
     QWidget,
     QHBoxLayout,
@@ -11,27 +11,30 @@ from PyQt5.QtWidgets import (
     QShortcut,
     QVBoxLayout,
     QInputDialog,
-    QListView,
     QMessageBox)
+
 from utils.data_utils import use_collection, my_db, read_config, update_collection_config
-from utils.fetch_images_info import previous_image, next_image, create_ssh_client
-from utils.fetch_images_info import set_image, get_all_image, update_current_image_id
-import logging
+from utils.fetch_images_info import (
+    previous_image,
+    next_image,
+    set_image,
+    get_all_image,
+    update_current_image_id)
 
 logging.basicConfig(level=logging.INFO)
 
 
 class ShowImage(QWidget):
 
-    def __init__(self):
+    def __init__(self, db, path, collection, ssh_client):
         super().__init__()
         self.images_folder = None
         self.tmp_image = os.path.dirname(os.path.dirname(__file__)) + '/app_images/tmp.png'
-        self.db = my_db
-        self.path = "default"
-        self.collection = use_collection(self.path) if self.path != "" else use_collection("default")
+        self.db = db
+        self.path = path
+        self.collection = collection
         # self.ssh_client = create_ssh_client("192.168.13.201", "nb201", "22")
-        self.ssh_client = create_ssh_client("119.23.33.220", "chris", "22")
+        self.ssh_client = ssh_client
         self.ftp_client = self.ssh_client.open_sftp()
 
         # widget
@@ -39,8 +42,6 @@ class ShowImage(QWidget):
         self.pixmap_label = QLabel(self)
         self.image_info_label = QLabel(self)
         self.image_path_label = QLabel(self)
-
-        self.collections_list_view = QListView(self)
 
         self.previous_button = QPushButton("Previous(D)", self)
         self.next_button = QPushButton("Next(F)", self)
@@ -54,8 +55,8 @@ class ShowImage(QWidget):
 
         # layout
         self.main_layout = QHBoxLayout()
-        self.button_layout = QVBoxLayout()
         self.image_info_layout = QVBoxLayout()
+        self.button_layout = QVBoxLayout()
 
         # init
         self.reload_tmp_image()
@@ -104,12 +105,6 @@ class ShowImage(QWidget):
         self.image_info_label.setText("current_image_id: {}".format(current_image_id))
         self.image_path_label.setText("please enter next.")
 
-        collections = self.db.list_collection_names()
-        model = QStandardItemModel()
-        for collection in sorted(collections):
-            model.appendRow(QStandardItem(collection))
-        self.collections_list_view.setModel(model)
-
         # add widget
         self.button_layout.addWidget(self.image_info_label)
         self.button_layout.addWidget(self.load_path_button)
@@ -118,7 +113,6 @@ class ShowImage(QWidget):
         self.button_layout.addWidget(self.previous_button)
         self.button_layout.addWidget(self.next_button)
         self.button_layout.addWidget(self.delete_button)
-        self.button_layout.addWidget(self.collections_list_view)
         self.image_info_layout.addWidget(self.image_path_label)
         self.image_info_layout.addWidget(self.pixmap_label)
 
@@ -142,8 +136,8 @@ class ShowImage(QWidget):
     @pyqtSlot()
     def load_remote_path(self):
         path, ok = QInputDialog.getText(self, "Input Remote Path", "Enter Path: ")
-        self.collection = self.db[path] if path != "" else use_collection("default")
-        data_info = self.collection.find_one({'class': 'app'})
+        collection = self.db[path] if path != "" else use_collection("default")
+        data_info = collection.find_one({'class': 'app'})
 
         stdin, stdout, stderr = self.ssh_client.exec_command("ls {}".format(path))
         path_exist = True if stdout.read().decode() != "" else False
@@ -151,12 +145,13 @@ class ShowImage(QWidget):
             my_db.drop_collection(path)
             self.load_remote_path()
         elif ok and data_info is None:
-            self.path = path
-            get_all_image(self.ssh_client, self.collection, folder_name=path)
-            update_current_image_id(self.collection, 'init')
+            get_all_image(self.ssh_client, collection, folder_name=path)
+            update_current_image_id(collection, 'init')
             # update config.json
-            update_collection_config(self.path)
+            update_collection_config(path)
             print("load finished.")
+        elif ok and data_info is not None:
+            self.collection = collection
 
     @pyqtSlot()
     def reload_remote_path(self):
@@ -187,8 +182,12 @@ class ShowImage(QWidget):
         text, ok = QInputDialog.getText(self, "Input Image Id", "Enter ID: ")
         print(text, ok)
         if ok:
-            set_image(self.collection, int(str(text)))
-            self.reload_tmp_image()
+            image_exist = set_image(self.collection, int(str(text)))
+            print("==>", image_exist)
+            if image_exist:
+                self.reload_tmp_image()
+            else:
+                QMessageBox.about(self, "no_image", "No such Images Id.")
 
     @pyqtSlot()
     def on_delete_button_click(self):

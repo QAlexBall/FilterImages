@@ -59,6 +59,8 @@ if __name__ == '__main__':
     # test_collection.insert_one(dic)
     my_db.drop_collection('/home')
     collection_show = use_collection("/mnt/hdd/dataset/Images/CuttingBed6/local/Images/cutting1/0")
+    collection_show = use_collection("/home/chris")
+    print(collection_show)
     for record in collection_show.find():
         print(record)
     print(my_db.list_collection_names())

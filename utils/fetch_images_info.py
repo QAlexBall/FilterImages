@@ -58,8 +58,13 @@ def next_image(collection):
 
 
 def set_image(collection, image_id):
-    condition = {'class': "app"}
-    collection.update_one(condition, {'$set': {'current_image_id': image_id}})
+    current_image = collection.find_one({'id': image_id})
+    if current_image is None:
+        return False
+    else:
+        condition = {'class': "app"}
+        collection.update_one(condition, {'$set': {'current_image_id': image_id}})
+        return True
 
 
 def get_all_image(ssh, collection, folder_name="/mnt/hdd/dataset/leopaper301_s3"):

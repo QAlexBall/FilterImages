@@ -1,36 +1,63 @@
 import os
 import sys
-from PyQt5.QtGui import QIcon, QKeySequence
+
+from PyQt5.QtGui import QIcon, QStandardItemModel, QStandardItem
 from PyQt5.QtWidgets import (
     QApplication,
     QMainWindow,
     QAction,
     QShortcut,
+    QListView,
+    QHBoxLayout,
+    QWidget
 )
+
 from src.show_image import ShowImage
+from utils.data_utils import use_collection, my_db
+from utils.fetch_images_info import create_ssh_client
 
 
 class FilterImagesMainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.path = os.path.dirname(os.path.dirname(__file__))
-        self.image_path = self.path + '/app_images/'
+        self.image_path = os.path.dirname(os.path.dirname(__file__)) + '/app_images/'
+        self.db = my_db
+        self.path = "default"
+        self.collection = use_collection(self.path) if self.path != "" else use_collection("default")
+        # self.ssh_client = create_ssh_client("192.168.13.201", "nb201", "22")
+        self.ssh_client = create_ssh_client("119.23.33.220", "chris", "22")
 
-        self.show_image = ShowImage()
+        self.show_image = ShowImage(self.db, self.path, self.collection, self.ssh_client)
+        self.collections_list_view = QListView(self)
+        self.main_layout = QHBoxLayout(self)
+
         self.visitable_image_sc = QShortcut("v", self)
         self.unvisitable_image_sc = QShortcut("h", self)
         self.initUI()
 
     def initUI(self):
         self.addShortCutEvent()
-
+        self.setUpLayout()
         self.initMenuBar()
         self.initToolBar()
         self.statusBar()
-        self.setCentralWidget(self.show_image)
+
+        main_window = QWidget()
+        main_window.setLayout(self.main_layout)
+        self.setCentralWidget(main_window)
         self.setGeometry(300, 300, 800, 600)
         self.setWindowTitle('Filter Images')
         self.show()
+
+    def setUpLayout(self):
+        collections = self.db.list_collection_names()
+        model = QStandardItemModel()
+        for collection in sorted(collections):
+            model.appendRow(QStandardItem(collection))
+        self.collections_list_view.setModel(model)
+
+        self.main_layout.addWidget(self.collections_list_view)
+        self.main_layout.addWidget(self.show_image)
 
     def addShortCutEvent(self):
         self.visitable_image_sc.activated.connect(self.show_image_func)
